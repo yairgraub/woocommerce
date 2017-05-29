@@ -43,6 +43,10 @@ class WC_Post_Data {
 		add_filter( 'update_post_metadata', array( __CLASS__, 'update_post_metadata' ), 10, 5 );
 		add_filter( 'wp_insert_post_data', array( __CLASS__, 'wp_insert_post_data' ) );
 
+		// Meta cache flushing.
+		add_action( 'updated_post_meta', array( __CLASS__, 'flush_object_meta_cache' ), 10, 4 );
+		add_action( 'updated_order_item_meta', array( __CLASS__, 'flush_object_meta_cache' ), 10, 4 );
+
 		// Status transitions
 		add_action( 'delete_post', array( __CLASS__, 'delete_post' ) );
 		add_action( 'wp_trash_post', array( __CLASS__, 'trash_post' ) );
@@ -448,6 +452,10 @@ class WC_Post_Data {
 				}
 			}
 		}
+	}
+
+	public static function flush_object_meta_cache( $meta_id, $object_id, $meta_key, $meta_value ) {
+
 	}
 }
 

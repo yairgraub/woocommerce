@@ -135,6 +135,25 @@ class WC_Tests_CRUD_Data extends WC_Unit_Test_Case {
 	}
 
 	/**
+	 * Tests that the meta data cache gets flushed when update_post_meta updates the object's meta.
+	 * @see https://github.com/woocommerce/woocommerce/issues/15274
+	 */
+	function test_get_meta_data_after_update_post_meta() {
+		$object  = new WC_Product;
+		$object->save();
+		update_post_meta( $object->get_id(), 'test_meta_key', 'val1' );
+
+		$product = wc_get_product( $object->get_id() );
+		$product->update_meta_data( 'test_meta_key_2', 'blah' );
+		update_post_meta( $object->get_id(), 'test_meta_key', 'val2' );
+		$product->save();
+
+		$product = wc_get_product( $object->get_id() );
+		$metas = $product->get_meta_data();
+		$this->assertEquals( 'val2', $metas[0]->value );
+	}
+
+	/**
 	 * Tests the cache invalidation after an order is saved
 	 */
 	function test_get_meta_data_cache_invalidation() {
