@@ -1036,6 +1036,16 @@ class WC_Admin_Setup_Wizard {
 	}
 
 	/**
+	 * Is currency supported by PayPal?
+	 *
+	 * @param string $currency_code Currency code.
+	 */
+	protected function is_paypal_supported_currency( $currency_code ) {
+		$payment_gateways = WC()->payment_gateways->payment_gateways();
+		return $payment_gateways['paypal']->is_valid_for_use();
+	}
+
+	/**
 	 * Is Klarna Checkout country supported
 	 *
 	 * @param string $country_code Country code.
@@ -1225,7 +1235,13 @@ class WC_Admin_Setup_Wizard {
 	public function get_wizard_in_cart_payment_gateways() {
 		$gateways = $this->get_wizard_available_in_cart_payment_gateways();
 
+		$currency   = get_woocommerce_currency();
+		$can_paypal = $this->is_paypal_supported_currency( $currency );
+
 		if ( ! current_user_can( 'install_plugins' ) ) {
+			if ( ! $can_paypal ) {
+				return array();
+			}
 			return array( 'paypal' => $gateways['paypal'] );
 		}
 
@@ -1241,10 +1257,10 @@ class WC_Admin_Setup_Wizard {
 		}
 
 		if ( isset( $spotlight ) ) {
-			$offered_gateways = array(
-				$spotlight    => $gateways[ $spotlight ],
-				'ppec_paypal' => $gateways['ppec_paypal'],
-			);
+			$offered_gateways = array( $spotlight => $gateways[ $spotlight ] );
+			if ( $can_paypal ) {
+				$offered_gateways += array( 'ppec_paypal' => $gateways['ppec_paypal'] );
+			}
 			if ( $can_stripe ) {
 				$offered_gateways += array( 'stripe' => $gateways['stripe'] );
 			}
@@ -1255,9 +1271,11 @@ class WC_Admin_Setup_Wizard {
 		if ( $can_stripe ) {
 			$gateways['stripe']['enabled']  = true;
 			$gateways['stripe']['featured'] = true;
-			$offered_gateways              += array( 'stripe' => $gateways['stripe'] );
+			$offered_gateways += array( 'stripe' => $gateways['stripe'] );
 		}
-		$offered_gateways += array( 'ppec_paypal' => $gateways['ppec_paypal'] );
+		if ( $can_paypal ) {
+			$offered_gateways += array( 'ppec_paypal' => $gateways['ppec_paypal'] );
+		}
 		return $offered_gateways;
 	}
 
